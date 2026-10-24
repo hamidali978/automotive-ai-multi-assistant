@@ -1,122 +1,242 @@
-C:\dev\autoagent-venv\Scripts\python -m uvicorn app.main:app --reload --port 8000
+# Automotive AI Assistant
 
-Mahindra Virtual Assistant: multistage AI chat agent with Zoho CRM sync
-Prototype of an end-to-end conversational agent for an automotive OEM. It recognises the customer's intent across the
-purchase and ownership lifecycle and reads/writes Zoho CRM in real time.
-Stage Customer says Agent does Zoho
-1 New lead "XUV700 price? I'd like a test drive" answers from the local catalog, collects name, phone, email, city, confirms, creates the lead (dedupe by phone) Leads
-2 Ongoing pipeline "Check my test drive" + phone or Deal ID verifies identity, reads the deal, updates the follow-up preference Deals
-3 Booked vehicle "Where is my Scorpio-N?" + Booking ID or phone verifies identity, reports delivery stage, VIN, ETA, balance Deals (`Closed Won - Booking Done`)
-4 Service "Brake noise, need a service" collects registration, odometer, issue, service center, confirms, creates a Case linked to the Contact Cases
-Stack: Next.js 14 (App Router, TypeScript, Tailwind, SSE) · FastAPI · SQLAlchemy async + Alembic · PostgreSQL 16 ·
-Groq `llama-3.3-70b-versatile` with Gemini fallback (direct SDK tool calling, no LangChain) · httpx.
-Design details and diagrams: docs/architecture.md.
+An open-source automotive AI assistant designed to connect conversational AI with vehicle discovery, test-drive scheduling, booking assistance, customer support, and Zoho CRM integration.
 
-1. Prerequisites (Windows)
-   Python 3.12, Node.js 20+
-   PostgreSQL 16 installed locally (no Docker), service running, `psql` on PATH is helpful
-   A Groq API key and/or a Gemini API key (free tiers work)
-   For live CRM mode: a Zoho CRM developer account (section 3). For a no-credentials demo use `ZOHO_MODE=mock`.
-2. Quick start
+Built around **Agentic AI, Multi-LLM Orchestration, and Enterprise API Integration**.
 
-```powershell
-# from the repo root
-copy backend\.env.example backend\.env      # then edit: GROQ_API_KEY and/or GEMINI_API_KEY, DATABASE_URL password
-.\scripts\dev.ps1 -Mock                      # offline demo: in-memory CRM pre-loaded with the seed data
+> **Project Status:** In Development
+
+## Overview
+
+Automotive AI Assistant aims to transform traditional automotive chatbots into intelligent assistants that can understand customer intent, maintain conversational context, retrieve business information, and execute authorized actions through backend integrations.
+
+The project focuses on four stages of the automotive customer lifecycle:
+
+- **New Lead:** Vehicle inquiries, specifications, pricing, and test-drive requests.
+- **Ongoing Pipeline:** Lead follow-ups, quotations, and test-drive status.
+- **Booked Vehicle:** Booking information, delivery updates, and payment-status inquiries.
+- **Post-Purchase & Service:** Service requests, maintenance inquiries, and support tickets.
+
+## Features
+
+- Conversational AI for automotive customer queries
+- Multi-LLM orchestration architecture
+- Vehicle discovery and specification assistance
+- Test-drive scheduling workflows
+- Booking and delivery-status assistance
+- Lead and sales-pipeline management
+- Post-purchase service requests
+- Zoho CRM integration
+- Backend API and tool calling
+- Context-aware conversational workflows
+- Extensible architecture for additional AI models and integrations
+
+> Feature availability depends on the current implementation and configuration.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    A[Customer Interface] --> B[Backend API]
+    B --> C[Intent Detection]
+    C --> D[LLM Orchestration]
+    D --> E[Selected LLM]
+    E --> F[Tool Calling]
+    F --> G[Zoho CRM]
+    F --> H[Vehicle Knowledge Base]
+    G --> I[Validated Response]
+    H --> I
+    I --> J[Customer Interface]
 ```
 
-`dev.ps1` checks prerequisites, creates `backend\.venv`, installs dependencies, creates the database if missing,
-runs `alembic upgrade head`, starts the API on http://localhost:8000 and the UI on http://localhost:3000.
-Flags: `-Seed` (seed live Zoho), `-SkipInstall`, `-NoStart`, `-Test` (run pytest), `-Stop`.
-(If script execution is blocked: `Set-ExecutionPolicy -Scope Process Bypass`.)
-Manual equivalent:
+## Technology Stack
 
-```powershell
-cd backend; py -3.12 -m venv .venv; .\.venv\Scripts\pip install -r requirements.txt
-.\.venv\Scripts\python -m alembic upgrade head
-.\.venv\Scripts\python -m uvicorn app.main:app --reload --port 8000
-# second terminal
-cd frontend; copy .env.example .env.local; npm install; npm run dev
+Update this section to reflect your actual implementation.
+
+- **Frontend:** React.js / Next.js
+- **Styling:** CSS / Tailwind CSS
+- **Backend:** Node.js / Express.js, if applicable
+- **AI:** Configured LLM providers
+- **CRM:** Zoho CRM REST API
+- **Integration:** REST APIs and tool calling
+- **Version Control:** Git and GitHub
+
+## Project Structure
+
+```text
+automotive-ai-assistant/
+├── frontend/
+├── backend/
+├── docs/
+│   └── architecture.md
+├── screenshots/
+├── .env.example
+├── .gitignore
+├── LICENSE
+├── CONTRIBUTING.md
+├── SECURITY.md
+└── README.md
 ```
 
-.\.venv\Scripts\Activate.ps1
-Health check: `GET http://localhost:8000/api/health` returns DB status, Zoho mode/token status, LLM key presence and retry-queue depth. 3. Live Zoho CRM setup
-Sign up at https://www.zoho.com/crm/ (developer/free account). Note your data centre (India `.in`, US `.com`, EU `.eu`, AU `.com.au`).
-Open the API Console (https://api-console.zoho.in or your region) → Self Client → note `client_id` / `client_secret`.
-In the Self Client, Generate Code with scope `ZohoCRM.modules.ALL,ZohoCRM.settings.ALL`, time duration 10 minutes. Copy the code (starts `1000.`).
-Exchange the code for a refresh token (code is single-use and expires in minutes):
+Adapt this structure to match your actual repository.
 
-```powershell
-   Invoke-RestMethod -Method Post -Uri "https://accounts.zoho.in/oauth/v2/token" -Body @{
-     grant_type="authorization_code"; client_id="<id>"; client_secret="<secret>"; code="<1000.code>" }
+## Getting Started
+
+### Prerequisites
+
+- Git
+- Node.js and npm, if required by the project
+- API credentials for your configured LLM provider
+- Zoho CRM developer credentials, if CRM integration is enabled
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/automotive-ai-assistant.git
+cd automotive-ai-assistant
 ```
 
-Save the `refresh_token` from the response (the refresh token does not expire; the service mints access tokens itself).
-Fill `backend\.env`: `ZOHO_MODE=live`, `ZOHO_ACCOUNTS_URL`, `ZOHO_API_DOMAIN` (e.g. `https://www.zohoapis.in`), `ZOHO_CLIENT_ID`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`.
-Create the custom fields below (Setup → Customization → Modules and Fields). API names must match exactly.
-`python scripts\seed_zoho.py --check-only` verifies fields and picklist values, then `python scripts\seed_zoho.py` seeds (idempotent).
-Custom Zoho fields to create
-Module API name Type Used for
-Leads `Vehicle_Model` Single line model of interest (stage 1)
-Leads `Chat_Session_ID` Single line trace back to the chat session
-Deals `Vehicle_Model` Single line model on the deal
-Deals `Variant` Single line e.g. AX7 Diesel AT, Z8L
-Deals `Test_Drive_DateTime` Date/Time confirmed test drive
-Deals `Quotation_Amount` Currency quoted amount (INR)
-Deals `Quotation_Ref` Single line quotation number
-Deals `Dealer_Name`, `Dealer_Phone` Single line dealer contact
-Deals `Follow_Up_Preference` Multi line written by the agent (stage 2)
-Deals `Booking_ID` Single line e.g. MAH-9921
-Deals `Delivery_Stage` Picklist Booking Confirmed, Allocation Pending, VIN Allocated, Dispatch Pending, In Transit, Delivered
-Deals `VIN` Single line
-Deals `Expected_Delivery_Date` Date
-Deals `Balance_Amount` Currency
-Deals `Payment_Link` URL balance payment link, shown only if present
-Cases `Registration_Number` Single line
-Cases `Odometer_KM` Number
-Cases `Service_Center` Single line
-Cases `Chat_Ref` Single line idempotency tag
-Also: add Deals › Stage picklist values `Test Drive Scheduled` and `Closed Won - Booking Done`; make sure your Lead Source picklist contains
-the value in `ZOHO_LEAD_SOURCE` (default `Web Research`); and make sure a Cases module exists (if not, create a custom module
-named `Cases` or set `ZOHO_CASES_MODULE`). The Case fields used by the mapper (`Subject`, `Related_To` Contact lookup, `Status`, `Priority`, `Case_Origin`,
-`Description`) are in `backend/app/crm/mapper.py::case_to_zoho`: adjust there if your layout differs.
-Seed data
-Record Details Try it in chat
-Lead Rajesh Sharma, Pune, Thar, `+91 98100 55001` new-lead dedupe: give this phone
-Deal Priya Patel, XUV700 test drive in 3 days, `+91 98200 11002` phone + name `Priya Patel`
-Booking `MAH-9921`, Scorpio-N Z8L, contact Anita Desai `+91 98330 22003`, In Transit Booking ID + last 4 digits `2003`
-`ZOHO_MODE=mock` loads the same data in memory on every start, so the demo works offline. 4. Configuration
-All keys and model names come from env (`backend/.env.example`, `frontend/.env.example`). Main ones: `DATABASE_URL`, `ZOHO_MODE`,
-`ZOHO_*`, `LLM_PRIMARY` (`groq` or `gemini`), `GROQ_API_KEY`, `GROQ_MODEL`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `NEXT_PUBLIC_API_URL`.
-Real `.env` files are git-ignored and never packaged. 5. Tests
+Replace `YOUR_USERNAME` with your GitHub username.
 
-```powershell
-.\scripts\dev.ps1 -Test         # or: cd backend; .\.venv\Scripts\python -m pytest -q
+### 2. Install Dependencies
+
+If the frontend and backend have separate `package.json` files, install their dependencies independently.
+
+**Frontend**
+
+```bash
+cd frontend
+npm install
 ```
 
-50 tests, using SQLite by default (set `TEST_DATABASE_URL=postgresql+asyncpg://...` to run on Postgres; the DB is wiped).
-They cover the four workflows end to end (scripted LLM tool calls against the mock CRM), identity verification and lockout, confirm-before-write
-(including bypass attempts), context switching, prompt injection, OAuth token refresh (cache, expiry, concurrency, 401 retry),
-live Zoho HTTP mapping, the Zoho-down path (retry, queue, honest tool result, replay exactly once, dead-letter), LLM fallback, SSE and health. 6. Suggested 5 to 7 minute demo (Loom)
-Open Zoho CRM in a second window. Chat: "What are the XUV700 variants?" → answer comes from the catalog; open the Debug drawer to show the tool call.
-"I'm interested in the Thar, test drive in Mumbai" → give name/phone/email → confirm → show the new Lead (with `Vehicle_Model`) in Zoho.
-New chat: "Check my test drive" → agent asks for phone + name → verify as Priya → show deal info → "call me after 7 PM" → confirm → show `Follow_Up_Preference` changing in Zoho.
-Mid-chat switch: "Where is my booking MAH-9921?" → last 4 digits `2003` → delivery stage (stage badge moves to Booked vehicle).
-"I need a service" → registration, odometer, issue, center → confirm → show the Case linked to the Contact.
-Show resilience (live mode): temporarily set `ZOHO_API_DOMAIN` to an unreachable host and restart the backend, create a lead → honest "queued" message → restore the setting and restart → the queued lead syncs within `QUEUE_POLL_S` seconds (`/api/health` → `retry_queue_depth` returns to 0). 7. Troubleshooting
-Symptom Fix
-`PostgreSQL is not reachable at localhost:5432` Start the service (Services → postgresql-x64-16); check port/credentials in `DATABASE_URL`
-`password authentication failed` Fix the password in `DATABASE_URL` (format `postgresql+asyncpg://user:pass@localhost:5432/autoagent`; URL-encode special characters)
-`/api/health` → `"zoho": "error: ZohoAuthError"` Wrong region URLs, expired/incorrect refresh token, or credentials missing. Re-run step 3 to 5
-`invalid_code` from Zoho The grant code is single-use and short-lived; generate a new one
-Seed fails with `INVALID_DATA` / `MANDATORY_NOT_FOUND` A custom field or picklist value is missing: run `seed_zoho.py --check-only`
-Cases step fails Cases module missing or different field names: see mapper note above
-Chat replies "I'm sorry, I could not complete that" No LLM key set or all providers failing: check `/api/health` → `llm`, and the backend console
-Groq `tool_use_failed` in logs Known llama-3.3 quirk; the router retries once, then falls back to Gemini
-UI shows "Could not reach the assistant" Backend not running or `NEXT_PUBLIC_API_URL` wrong; CORS origin must be in `CORS_ORIGINS`
-`dev.ps1` cannot be run `Set-ExecutionPolicy -Scope Process Bypass`
-Port 8000/3000 busy `.\scripts\dev.ps1 -Stop`, or stop the other process 8. Honest limitations
-Live Zoho and live LLM calls were not exercised in the build environment (no credentials). The Zoho HTTP client is tested against mocked HTTP using Zoho's documented response shapes; the first run against your org may need field-name tweaks in `mapper.py`.
-Verification is two-factor knowledge-based (no OTP). Fine for a prototype; use OTP for production.
-Dead-letter queue items keep their payload for manual replay; purge policy is not implemented.
-The vehicle catalog contains illustrative sample prices, not an official price list.
+**Backend**
+
+Open another terminal:
+
+```bash
+cd backend
+npm install
+```
+
+### 3. Configure Environment Variables
+
+Create local `.env` files using the environment variables required by your application.
+
+Example placeholders:
+
+```env
+NODE_ENV=development
+PORT=8000
+
+LLM_PROVIDER=
+LLM_API_KEY=
+
+ZOHO_CLIENT_ID=
+ZOHO_CLIENT_SECRET=
+ZOHO_REFRESH_TOKEN=
+ZOHO_REDIRECT_URI=
+ZOHO_API_DOMAIN=
+```
+
+These are illustrative names. Use the exact variable names expected by your code.
+
+**Never commit API keys, OAuth tokens, passwords, or production credentials.**
+
+### 4. Run the Application
+
+Start the frontend using the development script defined in its `package.json`.
+
+```bash
+npm run dev
+```
+
+Start the backend separately using its configured development command.
+
+Open the frontend at the local URL displayed in your terminal, for example:
+
+```text
+http://localhost:3000
+```
+
+Ensure the frontend API URL matches your backend configuration.
+
+## Example Use Cases
+
+### Vehicle Discovery
+
+- Explore vehicle specifications and variants.
+- Compare vehicle models.
+- Ask questions about vehicle features.
+
+### Sales and Test Drives
+
+- Request a test drive.
+- Provide a preferred date and dealership.
+- Check test-drive or quotation information.
+
+### Booking Assistance
+
+- Retrieve available booking information.
+- Ask about delivery status.
+- Check supported payment-related information.
+
+### Post-Purchase Support
+
+- Submit a service request.
+- Ask about maintenance.
+- Check an existing support ticket.
+
+Actual functionality depends on implemented workflows, available data, and permissions.
+
+## Security and Privacy
+
+- Store credentials in environment variables or a secrets manager.
+- Use secure OAuth authentication for CRM access.
+- Validate inputs and authorize every business action.
+- Apply least-privilege access permissions.
+- Protect customer information and redact sensitive logs.
+- Validate AI tool calls and model-generated outputs.
+- Implement rate limiting, audit logging, and error handling.
+- Require confirmation for consequential actions where appropriate.
+
+## Roadmap
+
+- [ ] Improve responsive frontend design.
+- [ ] Integrate and test supported LLM providers.
+- [ ] Implement intent detection and orchestration.
+- [ ] Complete Zoho CRM workflows.
+- [ ] Implement test-drive scheduling.
+- [ ] Add booking and service workflows.
+- [ ] Add automated tests.
+- [ ] Improve logging, monitoring, and error recovery.
+- [ ] Document deployment and production configuration.
+
+## Contributing
+
+Contributions are welcome!
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Implement your changes.
+4. Run relevant tests.
+5. Submit a pull request describing your changes.
+
+For major changes, open an issue before starting implementation.
+
+## License
+
+This project is intended to use the [MIT License](https://opensource.org/license/mit).
+
+Add the complete MIT License text in a `LICENSE` file before distributing the project under this license. Ensure that third-party code and assets permit your intended distribution.
+
+## Disclaimer
+
+This is an independent open-source project and is not affiliated with or endorsed by Mahindra. All trademarks belong to their respective owners.
+
+Vehicle specifications, pricing, availability, and booking information should be verified against authoritative sources.
+
+## Acknowledgements
+
+Thanks to the open-source communities working on AI engineering, LLM orchestration, web development, and CRM integrations.
+
+If you find this project useful, consider starring the repository, reporting issues, or contributing improvements.

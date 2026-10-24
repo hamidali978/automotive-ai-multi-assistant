@@ -91,3 +91,4 @@ sequenceDiagram
 | Audit | one row per CRM operation: action, module, record id, status, duration, error. Field names only, no values |
 | Failure policy | reads raise `CRMUnavailable` (tool tells the model); writes are queued and the customer is told honestly |
 | Mapper | the only place that knows Zoho API names (`mapper.py`) |
+C:\dev\autoagent-venv\Scripts\python -m uvicorn app.main:app --reload --port 8000
