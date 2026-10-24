@@ -1,0 +1,34 @@
+{
+  "disclaimer": "Prototype sample catalog. Prices are illustrative ex-showroom figures in INR and are not an official price list; confirm final on-road price with the dealer.",
+  "currency": "INR",
+  "models": [
+    {
+      "name": "XUV700", "segment": "Premium SUV", "seating": "5 / 6 / 7",
+      "highlights": ["Panoramic SkyRoof", "Dual 10.25-inch HD displays", "ADAS Level 2 (top variants)", "Sony 3D sound system (AX7 series)"],
+      "variants": [
+        {"name": "MX Petrol MT", "fuel": "Petrol", "transmission": "6-speed MT", "engine": "2.0L mStallion turbo petrol", "power_ps": 200, "torque_nm": 380, "ex_showroom_inr": 1449000},
+        {"name": "AX5 Diesel MT", "fuel": "Diesel", "transmission": "6-speed MT", "engine": "2.2L mHawk diesel", "power_ps": 155, "torque_nm": 360, "ex_showroom_inr": 1799000},
+        {"name": "AX7 Diesel AT", "fuel": "Diesel", "transmission": "6-speed AT", "engine": "2.2L mHawk diesel", "power_ps": 185, "torque_nm": 450, "ex_showroom_inr": 2349000},
+        {"name": "AX7 L Petrol AT", "fuel": "Petrol", "transmission": "6-speed AT", "engine": "2.0L mStallion turbo petrol", "power_ps": 200, "torque_nm": 380, "ex_showroom_inr": 2199000}
+      ]
+    },
+    {
+      "name": "Thar", "segment": "Lifestyle off-roader", "seating": "4",
+      "highlights": ["Convertible / hard-top options", "Shift-on-fly 4x4 (4WD variants)", "Mechanical locking rear differential (LX 4x4)", "7-inch touchscreen infotainment"],
+      "variants": [
+        {"name": "AX Opt Diesel RWD MT", "fuel": "Diesel", "transmission": "6-speed MT", "engine": "1.5L diesel", "power_ps": 117, "torque_nm": 300, "ex_showroom_inr": 1199000},
+        {"name": "LX Diesel 4x4 MT", "fuel": "Diesel", "transmission": "6-speed MT", "engine": "2.2L mHawk diesel", "power_ps": 132, "torque_nm": 300, "ex_showroom_inr": 1599000},
+        {"name": "LX Petrol 4x4 AT", "fuel": "Petrol", "transmission": "6-speed AT", "engine": "2.0L mStallion turbo petrol", "power_ps": 150, "torque_nm": 320, "ex_showroom_inr": 1749000}
+      ]
+    },
+    {
+      "name": "Scorpio-N", "segment": "Full-size SUV", "seating": "6 / 7",
+      "highlights": ["8-inch touchscreen with AdrenoX connectivity", "Sony 3D sound system (Z8 series)", "Terrain management modes (4WD variants)", "Captain-seat option"],
+      "variants": [
+        {"name": "Z4 Diesel MT", "fuel": "Diesel", "transmission": "6-speed MT", "engine": "2.2L mHawk diesel", "power_ps": 132, "torque_nm": 300, "ex_showroom_inr": 1399000},
+        {"name": "Z8 Petrol AT", "fuel": "Petrol", "transmission": "6-speed AT", "engine": "2.0L mStallion turbo petrol", "power_ps": 203, "torque_nm": 380, "ex_showroom_inr": 2099000},
+        {"name": "Z8L Diesel AT", "fuel": "Diesel", "transmission": "6-speed AT", "engine": "2.2L mHawk diesel", "power_ps": 175, "torque_nm": 400, "ex_showroom_inr": 2399000}
+      ]
+    }
+  ]
+}

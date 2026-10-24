@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+.next/
+.env
+.env.local
+.env.*.local
+*.log
+dist/
+autoagent-project.zip
+*.sqlite3
+.mypy_cache/

@@ -1,0 +1,93 @@
+# Architecture
+
+## 1. System overview
+
+```mermaid
+flowchart LR
+    U([Customer]) --> UI["Next.js chat UI<br/>stage rail + debug drawer"]
+    UI -- "POST /api/chat/stream (SSE)" --> API["FastAPI<br/>/api/chat, /api/sessions, /api/health"]
+    API --> ORCH["Agent orchestrator<br/>tool-calling loop, per-session lock"]
+    ORCH <--> LLM{{"LLM router"}}
+    LLM --> GROQ["Groq<br/>llama-3.3-70b-versatile"]
+    LLM -. "fallback before first token" .-> GEM["Gemini"]
+    ORCH --> TOOLS["Typed tools = intent routing<br/>guards: verify, confirm, validate"]
+    TOOLS --> CAT[("Local vehicle catalog<br/>vehicles.json")]
+    TOOLS --> CRM["CRM integration service<br/>the ONLY Zoho caller<br/>retries, idempotency, audit, queue"]
+    CRM --> TM["OAuth 2.0 token manager<br/>refresh under lock"]
+    CRM --> MAP["Field mapper"]
+    CRM -- "ZOHO_MODE=live" --> Z[("Zoho CRM v6<br/>Leads, Contacts, Deals, Cases")]
+    CRM -- "ZOHO_MODE=mock" --> M[("In-memory mock")]
+    ORCH --> PG[("PostgreSQL 16<br/>sessions, messages, state,<br/>audit_logs, retry_queue")]
+    CRM --> PG
+    W["Queue worker<br/>background task"] --> CRM
+```
+
+Zoho is the system of record. Postgres holds only operational data: conversation text, session state
+(drafts and verified record IDs), an audit log (field names only, never values) and a transient retry queue whose
+payload is erased once Zoho has accepted the write.
+
+## 2. Intent classification = tool choice
+
+There is no separate classifier. The model picks a tool; the tool decides the lifecycle stage shown in the UI.
+
+| Stage | Tools that route here | Zoho effect |
+|---|---|---|
+| 1 New lead | `list_vehicles`, `get_vehicle_info`, `save_lead_details`, `create_lead` | search Leads by phone (dedupe), create Lead |
+| 2 Ongoing pipeline | `verify_identity`, `get_deal_status`, `update_followup` | read Deal via Contact, update `Follow_Up_Preference` |
+| 3 Booked vehicle | `verify_identity`, `get_booking_status` | read Deal (`Closed Won - Booking Done`) |
+| 4 Post-purchase / service | `verify_identity`, `save_service_details`, `create_service_case` | create Case linked to Contact |
+
+Switching topics mid-chat just means the model calls a different tool; drafts and verified IDs stay in session state.
+
+## 3. A guarded write (confirm, create, outage)
+
+```mermaid
+sequenceDiagram
+    participant C as Customer
+    participant O as Orchestrator
+    participant T as Tool create_lead
+    participant S as CRM service
+    participant Z as Zoho
+    participant Q as retry_queue
+    C->>O: shares name, phone, email, city
+    O->>T: save_lead_details (validated, stored in session state)
+    O->>T: create_lead(user_confirmed=false)
+    T-->>O: confirmation_required + summary (pending hash saved, turn N)
+    O-->>C: summary, please confirm?
+    C->>O: yes (turn N+1)
+    O->>T: create_lead(user_confirmed=true)
+    Note over T: runs only if pending hash matches and turn is later than N
+    T->>S: create_lead(session, draft)
+    S->>S: idempotency key lookup in audit_logs
+    S->>Z: search Leads by phone (dedupe)
+    alt Zoho reachable
+        S->>Z: create Lead
+        Z-->>S: id
+        S-->>T: created, audit success
+    else timeouts, 5xx, 429 after retries
+        S->>Q: enqueue write (unique idempotency key)
+        S-->>T: queued, audit queued
+        T-->>O: note says not yet in CRM, no reference
+        O-->>C: honest message
+        Q-->>S: worker replays later, exactly once
+    end
+```
+
+## 4. Guards enforced in code
+
+- **Verification before data**: two factors. Phone lookup needs the registered full name; Deal or Booking ID lookup needs the last 4 phone digits. Three failures lock the session. Failure messages never say which factor was wrong. Deals are only readable if their contact is in the session's verified list.
+- **Confirm before write**: `create_lead`, `update_followup`, `create_service_case` return a summary first. The write only runs when `user_confirmed=true`, the confirmation was shown on an earlier turn, and the payload hash is unchanged.
+- **Catalog only**: specs and prices come from `vehicles.json`; unknown models return an error telling the model not to guess. Missing CRM values are `null` with an instruction to say so.
+- **Untrusted text**: user text is control-char stripped and length-capped; injection-like phrases raise a `security` event and a system warning, but the code guards above do not depend on the model complying. Tool arguments are validated by pydantic; unknown tools are rejected; the loop is bounded.
+
+## 5. CRM integration service
+
+| Concern | Implementation |
+|---|---|
+| OAuth 2.0 | `TokenManager`: refresh-token grant, cached with 60 s skew, `asyncio.Lock` so concurrent calls trigger one refresh, forced refresh and a single retry on HTTP 401 |
+| Timeouts | httpx 10 s total / 5 s connect (configurable) |
+| Retries | exponential backoff with jitter on timeouts, network errors, 429, 5xx; auth failures are not retried |
+| Idempotency | key = hash(session, action, payload) stored on the success audit row; Leads deduped by phone; Cases tagged with `Chat_Ref` and searched before create |
+| Audit | one row per CRM operation: action, module, record id, status, duration, error. Field names only, no values |
+| Failure policy | reads raise `CRMUnavailable` (tool tells the model); writes are queued and the customer is told honestly |
+| Mapper | the only place that knows Zoho API names (`mapper.py`) |
