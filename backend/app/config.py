@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", extra="ignore")
 
     app_env: str = "development"
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "https://automotive-ai-multi-assistant.onrender.com"
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/autoagent"
 
     zoho_mode: str = "mock"  # live | mock
