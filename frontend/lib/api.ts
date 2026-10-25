@@ -1,6 +1,6 @@
 import type { AgentState, ServerEvent } from "./types";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://automotive-ai-multi-assistant.onrender.com/";
 
 export async function fetchSession(
   id: string,
